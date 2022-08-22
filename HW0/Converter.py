@@ -18,8 +18,8 @@ exporter.register_preprocessor(TagRemovePreprocessor(config=c),True)
 # Configure and run our exporter - returns a tuple - first element with html,
 # second with notebook metadata
 output = PDFExporter(config=c).from_filename(
-        r"C:\MFE\MFE Sem 3\CSE 426\HW\HW0\867002105_HW0.ipynb")
+        r"C:\MFE\MFE Sem 3\CSE 426\CSE_426\HW0\867002105_HW0.ipynb")
 
 # Write to output html file
-with open(r"C:\MFE\MFE Sem 3\CSE 426\HW\HW0\867002105_HW0.pdf",  "wb") as f:
+with open(r"C:\MFE\MFE Sem 3\CSE 426\CSE_426\HW0\867002105_HW0.pdf",  "wb") as f:
     f.write(output[0])

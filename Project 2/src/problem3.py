@@ -70,12 +70,24 @@ def train(model, max_iters = 10, record_every = 1, max_passes = 1, tol=1e-6):
                 
                 if model.kernel_func.__name__ == 'linear_kernel':
 
-                    kkt = model.train_y[0,i]*((np.dot(np.multiply(model.alpha, model.train_y), np.dot(model.train_X[:,i],model.train_X))+model.b) - model.train_y[:,i])
+                    kkt = model.train_y[0,i]*((np.dot(np.multiply(model.alpha, model.train_y), linear_kernel(np.array([model.train_X[:,i]]).T,model.train_X).T) + model.b) - model.train_y[0,i])
+                #    kkt= model.train_y[0,i]*((np.sum(np.multiply(model.alpha, model.train_y) @ linear_kernel(np.array([model.train_X[:,i]]).T,model.train_X).T) + model.b) - model.train_y[0,i])
+                #    kkt= model.train_y[0,i]*((np.sum((model.alpha* model.train_y) @ linear_kernel(np.array([model.train_X[:,i]]).T,model.train_X).T) + model.b) - model.train_y[0,i])
+                #    kkt = model.train_y[0,i]*(f_x(model.train_X, model.train_y, model.alpha, model.b, model.train_X[:,i], 1) - model.train_y[0,i])
+                #    kkt = model.train_y[:,i]*((np.sum(np.multiply(model.alpha, model.train_y) * linear_kernel(np.array([model.train_X[:,i]]).T,model.train_X).T) + model.b) - model.train_y[:,i])
 
+                #    classifier = model.alpha[0,i]*model.train_y[0,i]*np.inner(model.train_X[0,i], model.train_X).sum() + model.b
+                #    error = classifier - model.train_y[0,i]
+                #    kkt = model.train_y[0,i]*error
+
+                #    kkt = model.train_y[0,i]*(model.alpha[0,i]*np.inner(model.train_X[0,i], model.train_X).sum() + model.b) - 1
+                #    kkt = model.train_y[0,i] - np.multiply(model.alpha, linear_kernel(np.array([model.train_X[:,i]]).T,model.train_X)).sum() - model.b
+                
                 else:
-                    kkt = model.train_y[0,i]*((np.dot(np.multiply(model.alpha, model.train_y), Gaussian_kernel(np.array([model.train_X[:,i]]), model.train_X).T)+model.b) - model.train_y[:,i])
 
-                if (kkt < -tol and model.alpha[0,i] < model.C) or (kkt > tol and model.alpha[0,i] > 0):
+                    kkt = model.train_y[0,i]*((np.dot(np.multiply(model.alpha, model.train_y), Gaussian_kernel(np.array([model.train_X[:,i]]), model.train_X).T) + model.b) - model.train_y[0,i])
+                
+                if (kkt < -1*tol and model.alpha[0,i] < model.C) or (kkt > tol and model.alpha[0,i] > 0):
                     # Random initialize where i != j               
                     list_for_randoms = [z for z in range(model.m)]
 
@@ -88,25 +100,32 @@ def train(model, max_iters = 10, record_every = 1, max_passes = 1, tol=1e-6):
 
                     # Upper and Lower Bounds
                     if y_vec[0,0] != y_vec[0,1]: 
-                        H = min(model.C, model.C - (alpha_vec[0,0] - alpha_vec[0,1]))
+                        H = min(model.C, model.C - alpha_vec[0,0] + alpha_vec[0,1])
                         L = max(0, -(alpha_vec[0,0] - alpha_vec[0,1]))
 
                     else:
                         H = min(model.C, alpha_vec[0,0] + alpha_vec[0,1])
                         L = max(0, alpha_vec[0,0] + alpha_vec[0,1] - model.C)
 
+
                     # Kernel Used
                     if model.kernel_func.__name__ == 'linear_kernel':
-                        K = linear_kernel(x, x)
+                        K = np.inner(x,x)
                     elif model.kernel_func.__name__ == 'Gaussian_kernel':
                         K = Gaussian_kernel(x, x)
 
                     #g vector with g_1 and g_2 inside for efficiency
-                    g_vec = np.dot(np.multiply(alpha_vec,y_vec), K) + model.b
+                    g_vec = np.dot(np.multiply(alpha_vec, y_vec), K) + model.b
 
                     # alpha_2 value
+                    #if K[0][0] + K[1][1] - 2*K[0][1] == 0:
+                    #    continue
+                    
                     alpha_new = alpha_vec[0, 1] + ((y_vec[0, 1]*(g_vec[0][0] - y_vec[0, 0] - g_vec[0][1] + y_vec[0, 1]))
                                             /(K[0][0] + K[1][1] - 2*K[0][1]))
+
+                    #if alpha_new < 0:
+                    #    alpha_new =0
 
                     # alpha_2 classification
                     if alpha_new > H:
@@ -118,8 +137,9 @@ def train(model, max_iters = 10, record_every = 1, max_passes = 1, tol=1e-6):
                     else: 
                         alpha_new_clipped = alpha_new
 
+                    
                     # Stopping if not meaningful change
-                    if np.abs(alpha_new_clipped-alpha_vec[0, 1]) <= tol:
+                    if np.abs(alpha_new_clipped-alpha_vec[0, 1]) < tol:
 
                         continue
 

@@ -37,7 +37,7 @@ class Sigmoid(Activation):
         :return: elementwise sigmoid of Z
         """
         #########################################
-        ## INSERT YOUR CODE HERE
+        return 1 / (1 + np.exp(-Z))
         #########################################
 
     @staticmethod
@@ -48,7 +48,7 @@ class Sigmoid(Activation):
         :return: elementwise gradient of sigmoid at Z
         """
         #########################################
-        ## INSERT YOUR CODE HERE
+        return np.multiply(Sigmoid.activate(Z), (1 - Sigmoid.activate(Z)))
         #########################################
 
 # --------------------------
@@ -69,9 +69,18 @@ class Softmax(Activation):
 
         Z: n x m matrix, where each column of Z is the vector for an example of dimension n.
         :return: each column of Z get transformed to a probability distribution.
+
+        Math
+        ---
+        log(Softmax([x_i,...,x_n])) = x_j - LogExpSum(x_i-c) - c
+        So,
+        Softmax([x_i,...,x_n]) = e^(x_j - LogExpSum(x_i-c) - c) *I chose to code this*
+                               = e^(x_j - c)e^(- LogExpSum(x_i-c))
+                               = e^(x_j - c) / e^(Sum(x_i-c))
         """
         #########################################
-        ## INSERT YOUR CODE HERE
+        c = np.max(Z, axis = 0)
+        return np.exp(Z - logsumexp(Z-c, axis = 0) - c)
         #########################################
 
     @staticmethod
@@ -123,7 +132,7 @@ class Tanh(Activation):
         :return: elementwise tanh of Z
         """
         #########################################
-        ## INSERT YOUR CODE HERE
+        return (np.exp(Z) - np.exp(-Z)) / (np.exp(Z) + np.exp(-Z)) 
         #########################################
 
     @staticmethod
@@ -134,7 +143,7 @@ class Tanh(Activation):
         :return: elementwise gradient of tanh at Z
         """
         #########################################
-        ## INSERT YOUR CODE HERE
+        return 1 - np.square(Tanh.activate(Z))
         #########################################
 
 # --------------------------
@@ -149,7 +158,8 @@ class ReLU(Activation):
         :return: elementwise tanh of Z
         """
         #########################################
-        ## INSERT YOUR CODE HERE
+        zeros = np.zeros(Z.shape)
+        return np.maximum(zeros, Z)
         #########################################
 
     @staticmethod
@@ -160,7 +170,7 @@ class ReLU(Activation):
         :return: elementwise gradient of tanh at Z
         """
         #########################################
-        ## INSERT YOUR CODE HERE
+        return np.asmatrix(np.where(Z > 0, 1, 0))
         #########################################
 
 # --------------------------
@@ -195,7 +205,11 @@ class CrossEntropyLoss(Loss):
         :return: a scalar that is the averaged cross entropy loss
         """
         #########################################
-        ## INSERT YOUR CODE HERE
+        return np.average(-(xlogy(Y, Y_hat, where = Y_hat > 0) + xlogy(1 - Y, 1 - Y_hat, where = Y_hat < 1)))
+                                            # (1)                                        # (2)
+        # We avoid log(0) by the 2 "where" statments:
+            # (1) stops log(p) when p = 0
+            # (2) stops log(1-p) when p = 1
         #########################################
 
     @staticmethod
@@ -207,7 +221,7 @@ class CrossEntropyLoss(Loss):
         :return: k x m vector, the gradients on the m training examples
         """
         #########################################
-        ## INSERT YOUR CODE HERE
+        return Y_hat - Y
         #########################################
 
 # --------------------------

@@ -26,13 +26,13 @@ if __name__ == '__main__':
               'Mini-batch size': 1024,
               'record_every': 10,
               'Test loss function name': '0-1 error',
-              'Feature map filename': '../data/feature_maps.pkl'
+              'Feature map filename': './data/feature_maps.pkl'
               }
 
     input_dim, n_samples = tr_X.shape
     num_classes = tr_Y.shape[0]
 
-    with open('../data/trained_model.pkl', 'rb') as f:
+    with open('./data/trained_model.pkl', 'rb') as f:
         nn = pickle.load(f)
 
     # then explain predictions of some images

@@ -20,14 +20,14 @@ def load_MNIST():
             test Y (columns are one-hot vectors indicating class labels)
     """
 
-    with open('../data/X_train.pkl', 'rb') as f:
+    with open('./data/X_train.pkl', 'rb') as f:
         X_train = pickle.load(f)
         X_train.reshape(-1, )
-    with open('../data/Y_train.pkl', 'rb') as f:
+    with open('./data/Y_train.pkl', 'rb') as f:
         Y_train = pickle.load(f)
-    with open('../data/X_test.pkl', 'rb') as f:
+    with open('./data/X_test.pkl', 'rb') as f:
         X_test = pickle.load(f)
-    with open('../data/Y_test.pkl', 'rb') as f:
+    with open('./data/Y_test.pkl', 'rb') as f:
         Y_test = pickle.load(f)
 
     num_classes = len(np.unique(Y_train))
@@ -77,21 +77,30 @@ if __name__ == '__main__':
     # input -> hidden -> output
     # you're encouraged to explore other architectures with more or less number of layers
     # Is more layers the better?
+    #   I found that more layers did not always mean better accuracy but I did find increasing the number of nodes did.
+    #   I did not end up using it as my answer as I did not know how fast it would be on your machine as mine was less than 3.  
     # Will ReLU work better than Sigmoid/Tanh?
+    #   Yes I found ReLU to work quite alot better for the hidden layers
     dimensions = [input_dim, 128, 64, num_classes]
     activation_funcs = {1:ReLU, 2:ReLU, 3:Softmax}
+    #dimensions = [input_dim, 256, 256, num_classes]
+    #activation_funcs = {1:ReLU, 2:ReLU, 3:Softmax}
+
     loss_func = CrossEntropyLoss
 
-    nn = NN(dimensions, activation_funcs, loss_func)
+    nn = NN(dimensions, activation_funcs, loss_func, rand_seed=42)
     nn.train(**kwargs)
 
     # after training finishes, save the model parameters
-    with open('../data/trained_model.pkl', 'wb') as f:
+    with open('./data/trained_model.pkl', 'wb') as f:
         pickle.dump(nn, f)
+    
 
     # evaluate the model on the test set and report the detailed performance
     predicted = np.argmax(nn.forward(kwargs['Test X']), axis=0)
     ground_truth_labels = np.argmax(kwargs['Test Y'], axis=0)
+
+
     print("Classification report for the neural network \n%s\n"
           % metrics.classification_report(np.squeeze(np.asarray(ground_truth_labels)), np.squeeze(predicted), digits=3))
     print("Confusion matrix \n%s\n"

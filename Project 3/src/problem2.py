@@ -15,7 +15,7 @@ class NN:
         Design consideration: we don't include data in this neural network class.
         Use these passed-in parameters to initialize the hyper-parameters
             (width of each layer, number of layers (depth), activation functions)
-        and parameters (W, b) of your NN.
+        and parameters (W, b) of your self.
 
         Also define the variables A and Z to be computed.
 
@@ -75,7 +75,15 @@ class NN:
         :return:  an n[L] x m matrix (the activations at output layer with n[L] neurons)
         """
         #########################################
-        ## INSERT YOUR CODE HERE
+        # Initializing the input layer
+        self.A[0] = X
+
+        # Forward Propogation
+        for l in range(self.num_layers):
+            self.Z[l+1] = self.W[l+1] @ self.A[l] + self.b[l+1]         # Linear Components
+            self.A[l+1] = self.g[l+1].activate(self.Z[l+1])             # Activation
+
+        return self.A[self.num_layers]
         #########################################
 
     #--------------------------
@@ -93,7 +101,19 @@ class NN:
                 db[i] is the gradient of the loss to b[i]
         """
         #########################################
-        ## INSERT YOUR CODE HERE
+        B = Y.shape[1]
+
+        for l in reversed(range(self.num_layers)):
+            if l == self.num_layers - 1:
+                self.dZ[l+1] = self.loss_func.gradient(Y,self.A[l+1])
+                self.dW[l+1] = (1/B)*self.dZ[l+1]*self.A[l].T
+                self.db[l+1] = (1/B)*self.dZ[l+1]*np.ones((B,1))
+            else:
+                self.dZ[l+1] = np.multiply(self.W[l+2].T*self.dZ[l+2], self.g[l+1].gradient(self.Z[l+1]))
+                self.dW[l+1] = (1/B)*self.dZ[l+1]*self.A[l].T
+                self.db[l+1] = (1/B)*self.dZ[l+1]*np.ones((B,1))
+        
+        return self.dW, self.db
         #########################################
 
     #--------------------------
@@ -104,7 +124,19 @@ class NN:
         :param lr: learning rate.
         """
         #########################################
-        ## INSERT YOUR CODE HERE
+        for l in reversed(range(self.num_layers)):
+            #W = np.array(self.W[l+1] - lr*np.average(self.dW[l+1], axis = 0) - weight_decay*lr*self.W[l+1])
+            #B = self.W[l+1].shape[1]
+            #averages = []
+
+            #W = self.W[l+1] - lr*(1/B)*np.sum(self.dW[l+1], axis = 1) - lr*weight_decay*self.W[l+1]
+            #W = self.W[l+1] - lr*weight_decay*self.W[l+1]
+            #W = np.array(self.W[l+1] - lr*np.average(self.dW[l+1], axis = 1) - weight_decay*lr*self.W[l+1])
+            W = np.asarray(self.W[l+1] - (lr*self.dW[l+1]+weight_decay*self.W[l+1]))
+            b = np.asarray(self.b[l+1] - lr*np.average(self.db[l+1], axis = 1))
+            
+            self.W[l+1] = W
+            self.b[l+1] = b
         #########################################
 
     #--------------------------
@@ -115,7 +147,7 @@ class NN:
         :param kwargs:
         :return: the loss at the final step
         """
-        X_train = kwargs['Training X']
+        X_train = np.asmatrix(kwargs['Training X'])
         Y_train = kwargs['Training Y']
         num_samples = X_train.shape[1]
         iter_num = kwargs['max_iters']
@@ -128,12 +160,20 @@ class NN:
         losses = []
         grad_norms = []
 
+        idx_total = np.array([i for i in range(num_samples)])
+
         # iterations of mini-batch stochastic gradient descent
         for it in range(iter_num):
             #########################################
-            ## INSERT YOUR CODE HERE
+            idx_chosen = np.random.choice(idx_total, batch_size)
+            batch_X = X_train[:, idx_chosen]
+            batch_Y = Y_train[:, idx_chosen]
+
+            self.forward(batch_X)
+            self.backward(batch_Y)
+            self.update_parameters(lr, weight_decay)
+
             #########################################
-            
             # tracking the test error during training.
             if (it + 1) % record_every == 0:
                 if 'Test X' in kwargs and 'Test Y' in kwargs:
@@ -147,7 +187,7 @@ class NN:
         :return: classification accuracy (for classification) or
                     MSE loss (for regression)
         """
-        X_test = kwargs['Test X']
+        X_test = np.asmatrix(kwargs['Test X'])
         Y_test = kwargs['Test Y']
 
         loss_func = kwargs['Test loss function name']
@@ -172,5 +212,17 @@ class NN:
             We will visualize this in a IPython Notebook.
         """
         #########################################
-        ## INSERT YOUR CODE HERE
+        self.forward(x)
+        d_zz = {}
+        for l in reversed(range(self.num_layers)):
+            if l == self.num_layers - 1:
+                W_c = np.array([self.W[l+1][y,:]])
+                d_zz[l]= np.multiply(W_c.T, self.g[l].gradient(self.Z[l]))
+            elif 0 < l < self.num_layers - 1:
+                d_zz[l] = np.multiply(self.W[l+1].T @ d_zz[l+1], self.g[l].gradient(self.Z[l]))
+            else:
+                d_zz[l] = self.W[l+1].T @ d_zz[l+1]
+
+
+        return d_zz[0]
         #########################################
